@@ -27,6 +27,9 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* gcc -o minibrowser minibrowser.c \
+ * $(pkg-config --cflags --libs webkitgtk-3.0) -Wall -O1 -g
+ */
 
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
