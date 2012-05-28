@@ -31,9 +31,17 @@
  * $(pkg-config --cflags --libs webkitgtk-3.0) -Wall -O1 -g
  */
 
+#include <glib.h>
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 
+static gboolean
+navigation_policy_decision_requested_cb(WebKitWebView* web_view,
+                                        WebKitWebFrame* web_frame,
+                                        WebKitNetworkRequest* request,
+                                        WebKitWebNavigationAction* action,
+                                        WebKitWebPolicyDecision* decision,
+                                        gpointer data);
 
 static void destroyWindowCb(GtkWidget* widget, GtkWidget* window);
 static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window);
@@ -60,6 +68,8 @@ int main(int argc, char* argv[])
     // closed, the program will exit
     g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
     g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
+    g_signal_connect(webView, "navigation-policy-decision-requested",
+                     G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
 
     // Put the scrollable area into the main window
     gtk_container_add(GTK_CONTAINER(main_window), scrolledWindow);
@@ -80,6 +90,33 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+
+static gboolean
+navigation_policy_decision_requested_cb(WebKitWebView* web_view,
+                                        WebKitWebFrame* web_frame,
+                                        WebKitNetworkRequest* request,
+                                        WebKitWebNavigationAction* action,
+                                        WebKitWebPolicyDecision* decision,
+                                        gpointer data)
+{
+    gboolean flag = TRUE;
+    const gchar *pattern = "http://www.webkitgtk.org/*";
+    const gchar *uri = webkit_network_request_get_uri(request);
+    g_message("Checking %s against %s", uri, pattern);
+    flag = g_pattern_match_string(g_pattern_spec_new(pattern),
+                                  uri);
+    if (flag)
+    {
+        g_message("Accepted");
+        webkit_web_policy_decision_use(decision);
+    }
+    else
+    {
+        g_message("Rejected");
+        webkit_web_policy_decision_ignore(decision);
+    }
+    return TRUE;
+}
 
 static void destroyWindowCb(GtkWidget* widget, GtkWidget* window)
 {
