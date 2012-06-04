@@ -36,10 +36,12 @@
 #include <webkit/webkit.h>
 
 static char *pattern = NULL;
+static gboolean debug = FALSE;
 
 static GOptionEntry entries[] =
 {
   { "restrict", 'r', 0, G_OPTION_ARG_STRING, &pattern, "Restrict navigation to URLs following the pattern P", "P" },
+  { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Print debug messages", NULL },
   { NULL }
 };
 
@@ -53,17 +55,17 @@ navigation_policy_decision_requested_cb(WebKitWebView* web_view,
 {
     gboolean flag = TRUE;
     const gchar *uri = webkit_network_request_get_uri(request);
-    g_message("Checking %s against %s", uri, pattern);
+    g_debug ("Checking %s against %s", uri, pattern);
     flag = g_pattern_match_string(g_pattern_spec_new(pattern),
                                   uri);
     if (flag)
     {
-        g_message("Accepted");
+		g_debug("Accepted");
         webkit_web_policy_decision_use(decision);
     }
     else
     {
-        g_message("Rejected");
+		g_debug("Rejected");
         webkit_web_policy_decision_ignore(decision);
     }
     return TRUE;
@@ -80,6 +82,16 @@ static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window)
     return TRUE;
 }
 
+static void
+debug_log_handler (const gchar *log_domain,
+				   GLogLevelFlags log_level,
+				   const gchar *message,
+				   gpointer user_data)
+{
+	if (debug)
+		g_print ("MINIBROWSER DEBUG: %s\n", message);
+}
+
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
@@ -88,12 +100,16 @@ int main(int argc, char* argv[])
     // Initialize GTK+
     gtk_init(&argc, &argv);
 
+	/* Set a custom debug handler */
+	g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, debug_log_handler, NULL);
+
+
     context = g_option_context_new ("- WebKitGtk+ mini browser");
     g_option_context_add_main_entries (context, entries, "minibrowser");
     g_option_context_add_group (context, gtk_get_option_group (TRUE));
     if (!g_option_context_parse (context, &argc, &argv, &error))
 	{
-		g_print ("option parsing failed: %s\n", error->message);
+		g_debug ("option parsing failed: %s\n", error->message);
 		return 1;
 	}
 
