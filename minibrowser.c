@@ -1,4 +1,4 @@
-
+/* -*- Mode: C; tab-width: 4; c-basic-offset: 4 -*- */
 /*
 * Copyright (C) 2006, 2007 Apple Inc.
 * Copyright (C) 2007 Alp Toker <alp@atoker.com>
@@ -35,61 +35,13 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 
-static gboolean
-navigation_policy_decision_requested_cb(WebKitWebView* web_view,
-                                        WebKitWebFrame* web_frame,
-                                        WebKitNetworkRequest* request,
-                                        WebKitWebNavigationAction* action,
-                                        WebKitWebPolicyDecision* decision,
-                                        gpointer data);
+static char *pattern = NULL;
 
-static void destroyWindowCb(GtkWidget* widget, GtkWidget* window);
-static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window);
-
-int main(int argc, char* argv[])
+static GOptionEntry entries[] =
 {
-    // Initialize GTK+
-    gtk_init(&argc, &argv);
-
-    // Create an 800x600 window that will contain the browser instance
-    GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
-
-    // Create a browser instance
-    WebKitWebView *webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
-
-    // Create a scrollable area, and put the browser instance into it
-    GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
-            GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(webView));
-
-    // Set up callbacks so that if either the main window or the browser instance is
-    // closed, the program will exit
-    g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
-    g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
-    g_signal_connect(webView, "navigation-policy-decision-requested",
-                     G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
-
-    // Put the scrollable area into the main window
-    gtk_container_add(GTK_CONTAINER(main_window), scrolledWindow);
-
-    // Load a web page into the browser instance
-    webkit_web_view_load_uri(webView, "http://www.webkitgtk.org/");
-
-    // Make sure that when the browser area becomes visible, it will get mouse
-    // and keyboard events
-    gtk_widget_grab_focus(GTK_WIDGET(webView));
-
-    // Make sure the main window and all its contents are visible
-    gtk_widget_show_all(main_window);
-
-    // Run the main GTK+ event loop
-    gtk_main();
-
-    return 0;
-}
-
+  { "restrict", 'r', 0, G_OPTION_ARG_STRING, &pattern, "Restrict navigation to URLs following the pattern P", "P" },
+  { NULL }
+};
 
 static gboolean
 navigation_policy_decision_requested_cb(WebKitWebView* web_view,
@@ -100,7 +52,6 @@ navigation_policy_decision_requested_cb(WebKitWebView* web_view,
                                         gpointer data)
 {
     gboolean flag = TRUE;
-    const gchar *pattern = "http://www.webkitgtk.org/*";
     const gchar *uri = webkit_network_request_get_uri(request);
     g_message("Checking %s against %s", uri, pattern);
     flag = g_pattern_match_string(g_pattern_spec_new(pattern),
@@ -129,3 +80,60 @@ static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window)
     return TRUE;
 }
 
+int main(int argc, char* argv[])
+{
+    GError *error = NULL;
+    GOptionContext *context;
+
+    // Initialize GTK+
+    gtk_init(&argc, &argv);
+
+    context = g_option_context_new ("- WebKitGtk+ mini browser");
+    g_option_context_add_main_entries (context, entries, "minibrowser");
+    g_option_context_add_group (context, gtk_get_option_group (TRUE));
+    if (!g_option_context_parse (context, &argc, &argv, &error))
+	{
+		g_print ("option parsing failed: %s\n", error->message);
+		return 1;
+	}
+
+    // Create an 800x600 window that will contain the browser instance
+    GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
+
+    // Create a browser instance
+    WebKitWebView *webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
+
+    // Create a scrollable area, and put the browser instance into it
+    GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
+            GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(webView));
+
+    // Set up callbacks so that if either the main window or the browser instance is
+    // closed, the program will exit
+    g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
+    g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
+
+	if (pattern)
+		g_signal_connect(webView, "navigation-policy-decision-requested",
+						 G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
+
+    // Put the scrollable area into the main window
+    gtk_container_add(GTK_CONTAINER(main_window), scrolledWindow);
+
+    // Load a web page into the browser instance
+    webkit_web_view_load_uri(webView, "http://www.webkitgtk.org/");
+
+    // Make sure that when the browser area becomes visible, it will get mouse
+    // and keyboard events
+    gtk_widget_grab_focus(GTK_WIDGET(webView));
+
+    // Make sure the main window and all its contents are visible
+    gtk_widget_show_all(main_window);
+
+    // Run the main GTK+ event loop
+    gtk_main();
+
+    return 0;
+}
