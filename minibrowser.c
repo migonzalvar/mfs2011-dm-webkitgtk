@@ -92,6 +92,16 @@ debug_log_handler (const gchar *log_domain,
 		g_print ("MINIBROWSER DEBUG: %s\n", message);
 }
 
+static void
+load_progress_changed_cb (WebKitWebView *web_view, GParamSpec *property, gpointer data)
+{
+    gdouble progress;
+    progress = webkit_web_view_get_progress(web_view);
+
+    GtkProgressBar *progress_bar = (GtkProgressBar *) data;
+    gtk_progress_bar_set_fraction(progress_bar, progress);
+}
+
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
@@ -131,12 +141,31 @@ int main(int argc, char* argv[])
     g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
     g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
 
+    // Create progress bar
+    GtkWidget *progress_bar = gtk_progress_bar_new();
+    g_object_set (progress_bar, "show-text", TRUE, NULL);
+    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), NULL);
+
+    // Set up callback so that load progress ir reported
+    g_signal_connect(webView, "notify::progress",
+                     G_CALLBACK(load_progress_changed_cb),
+                     (gpointer) progress_bar);
+
+    // Lay out widgets
+    GtkWidget *grid = gtk_grid_new();
+    gtk_widget_set_vexpand(scrolledWindow, TRUE);
+    gtk_widget_set_hexpand(scrolledWindow, TRUE);
+    gtk_widget_set_halign (scrolledWindow, GTK_ALIGN_FILL);
+    gtk_widget_set_valign (scrolledWindow, GTK_ALIGN_FILL);
+    gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 2, 1, 1);
+
 	if (pattern)
 		g_signal_connect(webView, "navigation-policy-decision-requested",
 						 G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
 
-    // Put the scrollable area into the main window
-    gtk_container_add(GTK_CONTAINER(main_window), scrolledWindow);
+    // Put the grid into the main window
+    gtk_container_add(GTK_CONTAINER(main_window), grid);
 
     // Load a web page into the browser instance
     webkit_web_view_load_uri(webView, "http://www.webkitgtk.org/");
