@@ -36,12 +36,14 @@
 #include <webkit/webkit.h>
 
 static char *pattern = NULL;
+static char *url = NULL;
 static gboolean debug = FALSE;
 
 static GOptionEntry entries[] =
 {
   { "restrict", 'r', 0, G_OPTION_ARG_STRING, &pattern, "Restrict navigation to URLs following the pattern P", "P" },
   { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Print debug messages", NULL },
+  { "url", 'u', 0, G_OPTION_ARG_STRING, &url, "URL to navigate to", NULL },
   { NULL }
 };
 
@@ -168,7 +170,7 @@ int main(int argc, char* argv[])
     gtk_container_add(GTK_CONTAINER(main_window), grid);
 
     // Load a web page into the browser instance
-    webkit_web_view_load_uri(webView, "http://www.webkitgtk.org/");
+    webkit_web_view_load_uri(webView, url ? url : "http://www.webkitgtk.org/");
 
     // Make sure that when the browser area becomes visible, it will get mouse
     // and keyboard events
