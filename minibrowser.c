@@ -181,11 +181,30 @@ setup_toolbar (WebKitWebView *web_view)
 	return toolbar;
 }
 
+static GtkWidget *
+setup_scrolled_window (WebKitWebView *web_view)
+{
+    /* Create a scrollable area, and put the browser instance into it */
+
+    GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
+
+    gtk_widget_set_vexpand(scrolledWindow, TRUE);
+    gtk_widget_set_hexpand(scrolledWindow, TRUE);
+    gtk_widget_set_halign (scrolledWindow, GTK_ALIGN_FILL);
+    gtk_widget_set_valign (scrolledWindow, GTK_ALIGN_FILL);
+
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
+								   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(web_view));
+
+	return scrolledWindow;
+}
+
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
-	GtkWidget *toolbar;
+	GtkWidget *toolbar, *scrolledWindow;
 
     // Initialize GTK+
     gtk_init(&argc, &argv);
@@ -210,11 +229,7 @@ int main(int argc, char* argv[])
     // Create a browser instance
     WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 
-    // Create a scrollable area, and put the browser instance into it
-    GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
-            GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(web_view));
+	scrolledWindow = setup_scrolled_window (web_view);
 
     // Set up callbacks so that if either the main window or the browser instance is
     // closed, the program will exit
