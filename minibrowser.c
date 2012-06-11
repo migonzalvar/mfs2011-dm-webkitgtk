@@ -216,14 +216,38 @@ setup_progress_bar (WebKitWebView *web_view)
 	return progress_bar;
 }
 
+static GtkWidget *
+setup_main_window (WebKitWebView *web_view)
+{
+	GtkWidget *main_window, *grid;
+	GtkWidget *toolbar, *scrolledWindow, *progress_bar;
+
+    /* Create an 800x600 window that will contain the browser instance */
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
+
+	/* Setup window widgets */
+	toolbar = setup_toolbar (web_view);
+	scrolledWindow = setup_scrolled_window (web_view);
+	progress_bar = setup_progress_bar (web_view);
+
+	/* Layout widgets in window */
+    grid = gtk_grid_new();
+    gtk_grid_attach(GTK_GRID(grid), toolbar, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 3, 1, 1);
+    gtk_container_add(GTK_CONTAINER(main_window), grid);
+
+	return main_window;
+}
 
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
-	GtkWidget *toolbar, *scrolledWindow, *progress_bar;
+	WebKitWebView *web_view;
+	GtkWidget *main_window;
 
-    // Initialize GTK+
     gtk_init(&argc, &argv);
 
 	/* Set a custom debug handler */
@@ -238,28 +262,16 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-    // Create an 800x600 window that will contain the browser instance
-    GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
+    /* Create a browser instance and the main window */
+    web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+	main_window = setup_main_window (web_view);
 
-    // Create a browser instance
-    WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-
-    // Set up callbacks so that if either the main window or the browser instance is
-    // closed, the program will exit
-    g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
+	/* Set up callbacks so that if either the main window or the
+	   browser instance is closed, the program will exit. */
     g_signal_connect(web_view, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
+    g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
 
-	toolbar = setup_toolbar (web_view);
-	scrolledWindow = setup_scrolled_window (web_view);
-	progress_bar = setup_progress_bar (web_view);
-
-    // Lay out widgets
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_attach(GTK_GRID(grid), toolbar, 1, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 3, 1, 1);
-
+	/* Obey command line options */
 	if (pattern)
 		g_signal_connect(web_view, "navigation-policy-decision-requested",
 						 G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
@@ -267,9 +279,6 @@ int main(int argc, char* argv[])
     if (block_windows)
         g_signal_connect(web_view, "new-window-policy-decision-requested",
 						 G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
-
-    // Put the grid into the main window
-    gtk_container_add(GTK_CONTAINER(main_window), grid);
 
     // Load a web page into the browser instance
     webkit_web_view_load_uri(web_view, url ? url : "http://www.webkitgtk.org/");
