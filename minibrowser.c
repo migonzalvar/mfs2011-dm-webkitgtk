@@ -49,6 +49,27 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+
+static void
+button_plus_clicked ( GtkWidget *widget, WebKitWebView *view )
+{
+       webkit_web_view_set_zoom_level (view,
+                0.10+ webkit_web_view_get_zoom_level(view));
+}
+
+static void
+button_minus_clicked ( GtkWidget *widget, WebKitWebView *view )
+{
+       webkit_web_view_set_zoom_level (view,
+                -0.10+ webkit_web_view_get_zoom_level(view) );
+}
+
+static void
+entry_activate_cb (GtkEntry *entry, WebKitWebView *view)
+{
+        webkit_web_view_load_uri(view,gtk_entry_get_text (GTK_ENTRY (entry)));
+}
+
 static gboolean
 new_window_policy_decision_requested_cb(WebKitWebView* web_view,
                                         WebKitWebFrame* web_frame,
@@ -93,7 +114,7 @@ static void destroyWindowCb(GtkWidget* widget, GtkWidget* window)
     gtk_main_quit();
 }
 
-static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window)
+static gboolean closeWebViewCb(WebKitWebView* web_view, GtkWidget* window)
 {
     gtk_widget_destroy(window);
     return TRUE;
@@ -123,6 +144,8 @@ int main(int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
+    GtkWidget *hbox;
+    GtkWidget *button_minus, *button_plus;
 
     // Initialize GTK+
     gtk_init(&argc, &argv);
@@ -145,18 +168,18 @@ int main(int argc, char* argv[])
     gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
 
     // Create a browser instance
-    WebKitWebView *webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
+    WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 
     // Create a scrollable area, and put the browser instance into it
     GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
             GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(webView));
+    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(web_view));
 
     // Set up callbacks so that if either the main window or the browser instance is
     // closed, the program will exit
     g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
-    g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
+    g_signal_connect(web_view, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
 
     // Create progress bar
     GtkWidget *progress_bar = gtk_progress_bar_new();
@@ -164,9 +187,41 @@ int main(int argc, char* argv[])
     gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), NULL);
 
     // Set up callback so that load progress ir reported
-    g_signal_connect(webView, "notify::progress",
+    g_signal_connect(web_view, "notify::progress",
                      G_CALLBACK(load_progress_changed_cb),
                      (gpointer) progress_bar);
+
+    // main <- Gtk_vertical box < hbox <- entry, button, button
+    //                          <- webView
+    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL,  0);
+    gtk_widget_show (hbox);
+
+    GtkWidget *entry_text = gtk_entry_new();
+    gtk_entry_set_text( GTK_ENTRY(entry_text) , "Type your URL" );
+
+    // Buttons:
+    button_plus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_IN);
+    button_minus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_OUT);
+
+    g_signal_connect (button_plus, "clicked",
+					  G_CALLBACK (button_plus_clicked),
+					  web_view);
+
+    g_signal_connect (button_minus, "clicked",
+					  G_CALLBACK (button_minus_clicked),
+					  web_view);
+
+    g_signal_connect (entry_text, "activate",
+					  G_CALLBACK (entry_activate_cb),
+					  web_view);
+
+	gtk_widget_show (button_minus);
+	gtk_widget_show (button_plus);
+	gtk_widget_show (entry_text);
+
+    gtk_box_pack_start (GTK_BOX (hbox), entry_text, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), button_plus, FALSE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), button_minus, FALSE, TRUE, 0);
 
     // Lay out widgets
     GtkWidget *grid = gtk_grid_new();
@@ -174,26 +229,27 @@ int main(int argc, char* argv[])
     gtk_widget_set_hexpand(scrolledWindow, TRUE);
     gtk_widget_set_halign (scrolledWindow, GTK_ALIGN_FILL);
     gtk_widget_set_valign (scrolledWindow, GTK_ALIGN_FILL);
-    gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), hbox, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 3, 1, 1);
 
 	if (pattern)
-		g_signal_connect(webView, "navigation-policy-decision-requested",
+		g_signal_connect(web_view, "navigation-policy-decision-requested",
 						 G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
 
     if (block_windows)
-        g_signal_connect(webView, "new-window-policy-decision-requested",
+        g_signal_connect(web_view, "new-window-policy-decision-requested",
 						 G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
 
     // Put the grid into the main window
     gtk_container_add(GTK_CONTAINER(main_window), grid);
 
     // Load a web page into the browser instance
-    webkit_web_view_load_uri(webView, url ? url : "http://www.webkitgtk.org/");
+    webkit_web_view_load_uri(web_view, url ? url : "http://www.webkitgtk.org/");
 
     // Make sure that when the browser area becomes visible, it will get mouse
     // and keyboard events
-    gtk_widget_grab_focus(GTK_WIDGET(webView));
+    gtk_widget_grab_focus(GTK_WIDGET(web_view));
 
     // Make sure the main window and all its contents are visible
     gtk_widget_show_all(main_window);
