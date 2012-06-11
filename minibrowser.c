@@ -98,12 +98,12 @@ navigation_policy_decision_requested_cb(WebKitWebView* web_view,
                                   uri);
     if (flag)
     {
-		g_debug("Accepted");
+        g_debug("Accepted");
         webkit_web_policy_decision_use(decision);
     }
     else
     {
-		g_debug("Rejected");
+        g_debug("Rejected");
         webkit_web_policy_decision_ignore(decision);
     }
     return TRUE;
@@ -122,12 +122,12 @@ static gboolean closeWebViewCb(WebKitWebView* web_view, GtkWidget* window)
 
 static void
 debug_log_handler (const gchar *log_domain,
-				   GLogLevelFlags log_level,
-				   const gchar *message,
-				   gpointer user_data)
+                   GLogLevelFlags log_level,
+                   const gchar *message,
+                   gpointer user_data)
 {
-	if (debug)
-		g_print ("MINIBROWSER DEBUG: %s\n", message);
+    if (debug)
+        g_print ("MINIBROWSER DEBUG: %s\n", message);
 }
 
 static void
@@ -145,7 +145,7 @@ setup_toolbar (WebKitWebView *web_view)
 {
     GtkWidget *button_minus, *button_plus, *toolbar, *entry_text;
 
-	/* Create widgets */
+    /* Create widgets */
     toolbar = gtk_box_new (GTK_ORIENTATION_HORIZONTAL,  0);
 
     button_plus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_IN);
@@ -154,31 +154,31 @@ setup_toolbar (WebKitWebView *web_view)
     entry_text = gtk_entry_new();
     gtk_entry_set_placeholder_text( GTK_ENTRY(entry_text) , "Type your URL" );
 
-	/* Add widgets to toolbar */
+    /* Add widgets to toolbar */
     gtk_box_pack_start (GTK_BOX (toolbar), entry_text, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (toolbar), button_plus, FALSE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (toolbar), button_minus, FALSE, TRUE, 0);
 
-	/* Connect callbacks */
+    /* Connect callbacks */
     g_signal_connect (button_plus, "clicked",
-					  G_CALLBACK (button_plus_clicked),
-					  web_view);
+                      G_CALLBACK (button_plus_clicked),
+                      web_view);
 
     g_signal_connect (button_minus, "clicked",
-					  G_CALLBACK (button_minus_clicked),
-					  web_view);
+                      G_CALLBACK (button_minus_clicked),
+                      web_view);
 
     g_signal_connect (entry_text, "activate",
-					  G_CALLBACK (entry_activate_cb),
-					  web_view);
+                      G_CALLBACK (entry_activate_cb),
+                      web_view);
 
-	/* Show & return */
-	gtk_widget_show (button_minus);
-	gtk_widget_show (button_plus);
-	gtk_widget_show (entry_text);
+    /* Show & return */
+    gtk_widget_show (button_minus);
+    gtk_widget_show (button_plus);
+    gtk_widget_show (entry_text);
     gtk_widget_show (toolbar);
 
-	return toolbar;
+    return toolbar;
 }
 
 static GtkWidget *
@@ -194,10 +194,10 @@ setup_scrolled_window (WebKitWebView *web_view)
     gtk_widget_set_valign (scrolledWindow, GTK_ALIGN_FILL);
 
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
-								   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(web_view));
 
-	return scrolledWindow;
+    return scrolledWindow;
 }
 
 static GtkWidget *
@@ -213,72 +213,72 @@ setup_progress_bar (WebKitWebView *web_view)
                      G_CALLBACK(load_progress_changed_cb),
                      (gpointer) progress_bar);
 
-	return progress_bar;
+    return progress_bar;
 }
 
 static GtkWidget *
 setup_main_window (WebKitWebView *web_view)
 {
-	GtkWidget *main_window, *grid;
-	GtkWidget *toolbar, *scrolledWindow, *progress_bar;
+    GtkWidget *main_window, *grid;
+    GtkWidget *toolbar, *scrolledWindow, *progress_bar;
 
     /* Create an 800x600 window that will contain the browser instance */
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
 
-	/* Setup window widgets */
-	toolbar = setup_toolbar (web_view);
-	scrolledWindow = setup_scrolled_window (web_view);
-	progress_bar = setup_progress_bar (web_view);
+    /* Setup window widgets */
+    toolbar = setup_toolbar (web_view);
+    scrolledWindow = setup_scrolled_window (web_view);
+    progress_bar = setup_progress_bar (web_view);
 
-	/* Layout widgets in window */
+    /* Layout widgets in window */
     grid = gtk_grid_new();
     gtk_grid_attach(GTK_GRID(grid), toolbar, 1, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 3, 1, 1);
     gtk_container_add(GTK_CONTAINER(main_window), grid);
 
-	return main_window;
+    return main_window;
 }
 
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
-	WebKitWebView *web_view;
-	GtkWidget *main_window;
+    WebKitWebView *web_view;
+    GtkWidget *main_window;
 
     gtk_init(&argc, &argv);
 
-	/* Set a custom debug handler */
-	g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, debug_log_handler, NULL);
+    /* Set a custom debug handler */
+    g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, debug_log_handler, NULL);
 
     context = g_option_context_new ("- WebKitGtk+ mini browser");
     g_option_context_add_main_entries (context, entries, "minibrowser");
     g_option_context_add_group (context, gtk_get_option_group (TRUE));
     if (!g_option_context_parse (context, &argc, &argv, &error))
-	{
-		g_debug ("option parsing failed: %s\n", error->message);
-		return 1;
-	}
+    {
+        g_debug ("option parsing failed: %s\n", error->message);
+        return 1;
+    }
 
     /* Create a browser instance and the main window */
     web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-	main_window = setup_main_window (web_view);
+    main_window = setup_main_window (web_view);
 
-	/* Set up callbacks so that if either the main window or the
-	   browser instance is closed, the program will exit. */
+    /* Set up callbacks so that if either the main window or the
+       browser instance is closed, the program will exit. */
     g_signal_connect(web_view, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
     g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
 
-	/* Obey command line options */
-	if (pattern)
-		g_signal_connect(web_view, "navigation-policy-decision-requested",
-						 G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
+    /* Obey command line options */
+    if (pattern)
+        g_signal_connect(web_view, "navigation-policy-decision-requested",
+                         G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
 
     if (block_windows)
         g_signal_connect(web_view, "new-window-policy-decision-requested",
-						 G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
+                         G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
 
     // Load a web page into the browser instance
     webkit_web_view_load_uri(web_view, url ? url : "http://www.webkitgtk.org/");
