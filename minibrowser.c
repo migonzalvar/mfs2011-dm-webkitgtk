@@ -140,12 +140,52 @@ load_progress_changed_cb (WebKitWebView *web_view, GParamSpec *property, gpointe
     gtk_progress_bar_set_fraction(progress_bar, progress);
 }
 
+static GtkWidget *
+setup_toolbar (WebKitWebView *web_view)
+{
+    GtkWidget *button_minus, *button_plus, *toolbar, *entry_text;
+
+	/* Create widgets */
+    toolbar = gtk_box_new (GTK_ORIENTATION_HORIZONTAL,  0);
+
+    button_plus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_IN);
+    button_minus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_OUT);
+
+    entry_text = gtk_entry_new();
+    gtk_entry_set_placeholder_text( GTK_ENTRY(entry_text) , "Type your URL" );
+
+	/* Add widgets to toolbar */
+    gtk_box_pack_start (GTK_BOX (toolbar), entry_text, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (toolbar), button_plus, FALSE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (toolbar), button_minus, FALSE, TRUE, 0);
+
+	/* Connect callbacks */
+    g_signal_connect (button_plus, "clicked",
+					  G_CALLBACK (button_plus_clicked),
+					  web_view);
+
+    g_signal_connect (button_minus, "clicked",
+					  G_CALLBACK (button_minus_clicked),
+					  web_view);
+
+    g_signal_connect (entry_text, "activate",
+					  G_CALLBACK (entry_activate_cb),
+					  web_view);
+
+	/* Show & return */
+	gtk_widget_show (button_minus);
+	gtk_widget_show (button_plus);
+	gtk_widget_show (entry_text);
+    gtk_widget_show (toolbar);
+
+	return toolbar;
+}
+
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
-    GtkWidget *hbox;
-    GtkWidget *button_minus, *button_plus;
+	GtkWidget *toolbar;
 
     // Initialize GTK+
     gtk_init(&argc, &argv);
@@ -193,43 +233,11 @@ int main(int argc, char* argv[])
 
     // main <- Gtk_vertical box < hbox <- entry, button, button
     //                          <- webView
-    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL,  0);
-    gtk_widget_show (hbox);
-
-    GtkWidget *entry_text = gtk_entry_new();
-    gtk_entry_set_text( GTK_ENTRY(entry_text) , "Type your URL" );
-
-    // Buttons:
-    button_plus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_IN);
-    button_minus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_OUT);
-
-    g_signal_connect (button_plus, "clicked",
-					  G_CALLBACK (button_plus_clicked),
-					  web_view);
-
-    g_signal_connect (button_minus, "clicked",
-					  G_CALLBACK (button_minus_clicked),
-					  web_view);
-
-    g_signal_connect (entry_text, "activate",
-					  G_CALLBACK (entry_activate_cb),
-					  web_view);
-
-	gtk_widget_show (button_minus);
-	gtk_widget_show (button_plus);
-	gtk_widget_show (entry_text);
-
-    gtk_box_pack_start (GTK_BOX (hbox), entry_text, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), button_plus, FALSE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), button_minus, FALSE, TRUE, 0);
+	toolbar = setup_toolbar (web_view);
 
     // Lay out widgets
     GtkWidget *grid = gtk_grid_new();
-    gtk_widget_set_vexpand(scrolledWindow, TRUE);
-    gtk_widget_set_hexpand(scrolledWindow, TRUE);
-    gtk_widget_set_halign (scrolledWindow, GTK_ALIGN_FILL);
-    gtk_widget_set_valign (scrolledWindow, GTK_ALIGN_FILL);
-    gtk_grid_attach(GTK_GRID(grid), hbox, 1, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), toolbar, 1, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), scrolledWindow, 1, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 3, 1, 1);
 
