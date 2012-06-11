@@ -38,14 +38,29 @@
 static char *pattern = NULL;
 static char *url = NULL;
 static gboolean debug = FALSE;
+static gboolean block_windows = FALSE;
 
 static GOptionEntry entries[] =
 {
   { "restrict", 'r', 0, G_OPTION_ARG_STRING, &pattern, "Restrict navigation to URLs following the pattern P", "P" },
   { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Print debug messages", NULL },
   { "url", 'u', 0, G_OPTION_ARG_STRING, &url, "URL to navigate to", NULL },
+  { "block", 'b', 0, G_OPTION_ARG_NONE, &block_windows, "Block all new windows", NULL },
   { NULL }
 };
+
+static gboolean
+new_window_policy_decision_requested_cb(WebKitWebView* web_view,
+                                        WebKitWebFrame* web_frame,
+                                        WebKitNetworkRequest* request,
+                                        WebKitWebNavigationAction* action,
+                                        WebKitWebPolicyDecision* decision,
+                                        gpointer data)
+{
+    g_debug("New window rejected");
+    webkit_web_policy_decision_ignore(decision);
+    return TRUE;
+}
 
 static gboolean
 navigation_policy_decision_requested_cb(WebKitWebView* web_view,
@@ -165,6 +180,10 @@ int main(int argc, char* argv[])
 	if (pattern)
 		g_signal_connect(webView, "navigation-policy-decision-requested",
 						 G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
+
+    if (block_windows)
+        g_signal_connect(webView, "new-window-policy-decision-requested",
+						 G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
 
     // Put the grid into the main window
     gtk_container_add(GTK_CONTAINER(main_window), grid);
