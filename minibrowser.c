@@ -200,18 +200,34 @@ setup_scrolled_window (WebKitWebView *web_view)
 	return scrolledWindow;
 }
 
+static GtkWidget *
+setup_progress_bar (WebKitWebView *web_view)
+{
+    /* Create progress bar */
+    GtkWidget *progress_bar = gtk_progress_bar_new();
+    g_object_set (progress_bar, "show-text", TRUE, NULL);
+    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), NULL);
+
+    /* Set up callback so that load progress ir reported */
+    g_signal_connect(web_view, "notify::progress",
+                     G_CALLBACK(load_progress_changed_cb),
+                     (gpointer) progress_bar);
+
+	return progress_bar;
+}
+
+
 int main(int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
-	GtkWidget *toolbar, *scrolledWindow;
+	GtkWidget *toolbar, *scrolledWindow, *progress_bar;
 
     // Initialize GTK+
     gtk_init(&argc, &argv);
 
 	/* Set a custom debug handler */
 	g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, debug_log_handler, NULL);
-
 
     context = g_option_context_new ("- WebKitGtk+ mini browser");
     g_option_context_add_main_entries (context, entries, "minibrowser");
@@ -229,26 +245,14 @@ int main(int argc, char* argv[])
     // Create a browser instance
     WebKitWebView *web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 
-	scrolledWindow = setup_scrolled_window (web_view);
-
     // Set up callbacks so that if either the main window or the browser instance is
     // closed, the program will exit
     g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
     g_signal_connect(web_view, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
 
-    // Create progress bar
-    GtkWidget *progress_bar = gtk_progress_bar_new();
-    g_object_set (progress_bar, "show-text", TRUE, NULL);
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), NULL);
-
-    // Set up callback so that load progress ir reported
-    g_signal_connect(web_view, "notify::progress",
-                     G_CALLBACK(load_progress_changed_cb),
-                     (gpointer) progress_bar);
-
-    // main <- Gtk_vertical box < hbox <- entry, button, button
-    //                          <- webView
 	toolbar = setup_toolbar (web_view);
+	scrolledWindow = setup_scrolled_window (web_view);
+	progress_bar = setup_progress_bar (web_view);
 
     // Lay out widgets
     GtkWidget *grid = gtk_grid_new();
