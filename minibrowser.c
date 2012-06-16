@@ -39,6 +39,7 @@ static char *pattern = NULL;
 static char *url = NULL;
 static gboolean debug = FALSE;
 static gboolean block_windows = FALSE;
+static gboolean dom_tree = FALSE;
 
 static GOptionEntry entries[] =
 {
@@ -46,6 +47,7 @@ static GOptionEntry entries[] =
     { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Print debug messages", NULL },
     { "url", 'u', 0, G_OPTION_ARG_STRING, &url, "URL to navigate to", NULL },
     { "block", 'b', 0, G_OPTION_ARG_NONE, &block_windows, "Block all new windows", NULL },
+    { "dom", 't', 0, G_OPTION_ARG_NONE, &dom_tree, "Activate DOM scanning", NULL },
     { NULL }
 };
 
@@ -130,6 +132,32 @@ debug_log_handler (const gchar *log_domain,
 }
 
 static void
+handle_load_finished (WebKitWebView *web_view, void* context)
+{
+    gint i;
+
+    WebKitDOMDocument *document =
+            webkit_web_view_get_dom_document (WEBKIT_WEB_VIEW (web_view));
+    WebKitDOMNodeList *elements =
+            webkit_dom_document_get_elements_by_tag_name (document, "*");
+    gulong element_count = webkit_dom_node_list_get_length (elements);
+
+    g_debug ("--Parsing DOM tree--");
+    /* Print all tag names present in the document */
+    for (i = 0; i < element_count; i++)
+    {
+        WebKitDOMNode *element = webkit_dom_node_list_item (elements, i);
+        g_debug ("-tag name: %s",
+            webkit_dom_element_get_tag_name ((WebKitDOMElement*)element));
+
+        WebKitDOMHTMLElement* htmlElement = (WebKitDOMHTMLElement*)element;
+        g_debug ("-text:");
+        g_print("%s\n", webkit_dom_html_element_get_inner_text (htmlElement));
+    }
+    g_debug ("--Parsed--\n");
+}
+
+static void
 load_progress_changed_cb (WebKitWebView *web_view, GParamSpec *property, gpointer data)
 {
     gdouble progress;
@@ -137,6 +165,15 @@ load_progress_changed_cb (WebKitWebView *web_view, GParamSpec *property, gpointe
 
     GtkProgressBar *progress_bar = (GtkProgressBar *) data;
     gtk_progress_bar_set_fraction (progress_bar, progress);
+}
+
+static void
+load_status_cb (WebKitWebView *web_view, GParamSpec *pspec, void* context)
+{
+    WebKitLoadStatus status = webkit_web_view_get_load_status (web_view);
+
+    if (status == WEBKIT_LOAD_FINISHED)
+        handle_load_finished (web_view, context);
 }
 
 static GtkWidget *
@@ -279,6 +316,10 @@ main (int argc, char* argv[])
     if (block_windows)
         g_signal_connect (web_view, "new-window-policy-decision-requested",
                          G_CALLBACK (new_window_policy_decision_requested_cb), NULL);
+
+    if (dom_tree)
+        g_signal_connect (web_view, "notify::load-status",
+                         G_CALLBACK(load_status_cb), NULL);
 
     /* Load a web page into the browser instance */
     webkit_web_view_load_uri (web_view, url ? url : "http://www.webkitgtk.org/");
