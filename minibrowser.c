@@ -51,15 +51,15 @@ static GOptionEntry entries[] =
 
 
 static void
-button_plus_clicked ( GtkWidget *widget, WebKitWebView *view )
+button_plus_clicked (GtkWidget *widget, WebKitWebView *view)
 {
-    webkit_web_view_set_zoom_level (view, 0.10+ webkit_web_view_get_zoom_level(view));
+    webkit_web_view_set_zoom_level (view, 0.10+ webkit_web_view_get_zoom_level (view));
 }
 
 static void
-button_minus_clicked ( GtkWidget *widget, WebKitWebView *view )
+button_minus_clicked (GtkWidget *widget, WebKitWebView *view)
 {
-    webkit_web_view_set_zoom_level (view, -0.10+ webkit_web_view_get_zoom_level(view) );
+    webkit_web_view_set_zoom_level (view, -0.10+ webkit_web_view_get_zoom_level (view));
 }
 
 static void
@@ -69,51 +69,53 @@ entry_activate_cb (GtkEntry *entry, WebKitWebView *view)
 }
 
 static gboolean
-new_window_policy_decision_requested_cb(WebKitWebView* web_view,
-                                        WebKitWebFrame* web_frame,
-                                        WebKitNetworkRequest* request,
-                                        WebKitWebNavigationAction* action,
-                                        WebKitWebPolicyDecision* decision,
-                                        gpointer data)
+new_window_policy_decision_requested_cb (WebKitWebView* web_view,
+                                         WebKitWebFrame* web_frame,
+                                         WebKitNetworkRequest* request,
+                                         WebKitWebNavigationAction* action,
+                                         WebKitWebPolicyDecision* decision,
+                                         gpointer data)
 {
-    g_debug("New window rejected");
-    webkit_web_policy_decision_ignore(decision);
+    g_debug ("New window rejected");
+    webkit_web_policy_decision_ignore (decision);
     return TRUE;
 }
 
 static gboolean
-navigation_policy_decision_requested_cb(WebKitWebView* web_view,
-                                        WebKitWebFrame* web_frame,
-                                        WebKitNetworkRequest* request,
-                                        WebKitWebNavigationAction* action,
-                                        WebKitWebPolicyDecision* decision,
-                                        gpointer data)
+navigation_policy_decision_requested_cb (WebKitWebView* web_view,
+                                         WebKitWebFrame* web_frame,
+                                         WebKitNetworkRequest* request,
+                                         WebKitWebNavigationAction* action,
+                                         WebKitWebPolicyDecision* decision,
+                                         gpointer data)
 {
     gboolean flag = TRUE;
-    const gchar *uri = webkit_network_request_get_uri(request);
+    const gchar *uri = webkit_network_request_get_uri (request);
     g_debug ("Checking %s against %s", uri, pattern);
-    flag = g_pattern_match_string(g_pattern_spec_new(pattern), uri);
+    flag = g_pattern_match_string (g_pattern_spec_new (pattern), uri);
     if (flag)
     {
-        g_debug("Accepted");
-        webkit_web_policy_decision_use(decision);
+        g_debug ("Accepted");
+        webkit_web_policy_decision_use (decision);
     }
     else
     {
-        g_debug("Rejected");
-        webkit_web_policy_decision_ignore(decision);
+        g_debug ("Rejected");
+        webkit_web_policy_decision_ignore (decision);
     }
     return TRUE;
 }
 
-static void destroy_window_cb(GtkWidget* widget, GtkWidget* window)
+static void
+destroy_window_cb (GtkWidget* widget, GtkWidget* window)
 {
-    gtk_main_quit();
+    gtk_main_quit ();
 }
 
-static gboolean close_web_view_cb(WebKitWebView* web_view, GtkWidget* window)
+static gboolean
+close_web_view_cb (WebKitWebView* web_view, GtkWidget* window)
 {
-    gtk_widget_destroy(window);
+    gtk_widget_destroy (window);
     return TRUE;
 }
 
@@ -131,10 +133,10 @@ static void
 load_progress_changed_cb (WebKitWebView *web_view, GParamSpec *property, gpointer data)
 {
     gdouble progress;
-    progress = webkit_web_view_get_progress(web_view);
+    progress = webkit_web_view_get_progress (web_view);
 
     GtkProgressBar *progress_bar = (GtkProgressBar *) data;
-    gtk_progress_bar_set_fraction(progress_bar, progress);
+    gtk_progress_bar_set_fraction (progress_bar, progress);
 }
 
 static GtkWidget *
@@ -148,8 +150,8 @@ setup_toolbar (WebKitWebView *web_view)
     button_plus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_IN);
     button_minus = gtk_button_new_from_stock (GTK_STOCK_ZOOM_OUT);
 
-    entry_text = gtk_entry_new();
-    gtk_entry_set_placeholder_text( GTK_ENTRY(entry_text) , "Type your URL" );
+    entry_text = gtk_entry_new ();
+    gtk_entry_set_placeholder_text (GTK_ENTRY (entry_text), "Type your URL");
 
     /* Add widgets to toolbar */
     gtk_box_pack_start (GTK_BOX (toolbar), entry_text, TRUE, TRUE, 0);
@@ -183,16 +185,16 @@ setup_scrolled_window (WebKitWebView *web_view)
 {
     /* Create a scrollable area, and put the browser instance into it */
 
-    GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+    GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 
-    gtk_widget_set_vexpand(scrolled_window, TRUE);
-    gtk_widget_set_hexpand(scrolled_window, TRUE);
+    gtk_widget_set_vexpand (scrolled_window, TRUE);
+    gtk_widget_set_hexpand (scrolled_window, TRUE);
     gtk_widget_set_halign (scrolled_window, GTK_ALIGN_FILL);
     gtk_widget_set_valign (scrolled_window, GTK_ALIGN_FILL);
 
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(web_view));
+    gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (web_view));
 
     return scrolled_window;
 }
@@ -201,13 +203,13 @@ static GtkWidget *
 setup_progress_bar (WebKitWebView *web_view)
 {
     /* Create progress bar */
-    GtkWidget *progress_bar = gtk_progress_bar_new();
+    GtkWidget *progress_bar = gtk_progress_bar_new ();
     g_object_set (progress_bar, "show-text", TRUE, NULL);
-    gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress_bar), NULL);
+    gtk_progress_bar_set_text (GTK_PROGRESS_BAR (progress_bar), NULL);
 
     /* Set up callback so that load progress ir reported */
-    g_signal_connect(web_view, "notify::progress",
-                     G_CALLBACK(load_progress_changed_cb),
+    g_signal_connect (web_view, "notify::progress",
+                     G_CALLBACK (load_progress_changed_cb),
                      (gpointer) progress_bar);
 
     return progress_bar;
@@ -220,8 +222,8 @@ setup_main_window (WebKitWebView *web_view)
     GtkWidget *toolbar, *scrolled_window, *progress_bar;
 
     /* Create an 800x600 window that will contain the browser instance */
-    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
+    main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size (GTK_WINDOW (main_window), 800, 600);
 
     /* Setup window widgets */
     toolbar = setup_toolbar (web_view);
@@ -229,23 +231,24 @@ setup_main_window (WebKitWebView *web_view)
     progress_bar = setup_progress_bar (web_view);
 
     /* Layout widgets in window */
-    grid = gtk_grid_new();
-    gtk_grid_attach(GTK_GRID(grid), toolbar, 1, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), scrolled_window, 1, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 3, 1, 1);
-    gtk_container_add(GTK_CONTAINER(main_window), grid);
+    grid = gtk_grid_new ();
+    gtk_grid_attach (GTK_GRID (grid), toolbar, 1, 1, 1, 1);
+    gtk_grid_attach (GTK_GRID (grid), scrolled_window, 1, 2, 1, 1);
+    gtk_grid_attach (GTK_GRID (grid), progress_bar, 1, 3, 1, 1);
+    gtk_container_add (GTK_CONTAINER (main_window), grid);
 
     return main_window;
 }
 
-int main(int argc, char* argv[])
+int
+main (int argc, char* argv[])
 {
     GError *error = NULL;
     GOptionContext *context;
     WebKitWebView *web_view;
     GtkWidget *main_window;
 
-    gtk_init(&argc, &argv);
+    gtk_init (&argc, &argv);
 
     /* Set a custom debug handler */
     g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, debug_log_handler, NULL);
@@ -260,35 +263,35 @@ int main(int argc, char* argv[])
     }
 
     /* Create a browser instance and the main window */
-    web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+    web_view = WEBKIT_WEB_VIEW (webkit_web_view_new ());
     main_window = setup_main_window (web_view);
 
     /* Set up callbacks so that if either the main window or the
        browser instance is closed, the program will exit. */
-    g_signal_connect(web_view, "close-web-view", G_CALLBACK(close_web_view_cb), main_window);
-    g_signal_connect(main_window, "destroy", G_CALLBACK(destroy_window_cb), NULL);
+    g_signal_connect (web_view, "close-web-view", G_CALLBACK (close_web_view_cb), main_window);
+    g_signal_connect (main_window, "destroy", G_CALLBACK (destroy_window_cb), NULL);
 
     /* Obey command line options */
     if (pattern)
-        g_signal_connect(web_view, "navigation-policy-decision-requested",
-                         G_CALLBACK(navigation_policy_decision_requested_cb), NULL);
+        g_signal_connect (web_view, "navigation-policy-decision-requested",
+                         G_CALLBACK (navigation_policy_decision_requested_cb), NULL);
 
     if (block_windows)
-        g_signal_connect(web_view, "new-window-policy-decision-requested",
-                         G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
+        g_signal_connect (web_view, "new-window-policy-decision-requested",
+                         G_CALLBACK (new_window_policy_decision_requested_cb), NULL);
 
     /* Load a web page into the browser instance */
-    webkit_web_view_load_uri(web_view, url ? url : "http://www.webkitgtk.org/");
+    webkit_web_view_load_uri (web_view, url ? url : "http://www.webkitgtk.org/");
 
     /* Make sure that when the browser area becomes visible, it will get mouse
        and keyboard events */
-    gtk_widget_grab_focus(GTK_WIDGET(web_view));
+    gtk_widget_grab_focus (GTK_WIDGET(web_view));
 
     /* Make sure the main window and all its contents are visible */
-    gtk_widget_show_all(main_window);
+    gtk_widget_show_all (main_window);
 
     /* Run the main GTK+ event loop */
-    gtk_main();
+    gtk_main ();
 
     return 0;
 }
