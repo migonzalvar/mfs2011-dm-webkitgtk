@@ -42,32 +42,30 @@ static gboolean block_windows = FALSE;
 
 static GOptionEntry entries[] =
 {
-  { "restrict", 'r', 0, G_OPTION_ARG_STRING, &pattern, "Restrict navigation to URLs following the pattern P", "P" },
-  { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Print debug messages", NULL },
-  { "url", 'u', 0, G_OPTION_ARG_STRING, &url, "URL to navigate to", NULL },
-  { "block", 'b', 0, G_OPTION_ARG_NONE, &block_windows, "Block all new windows", NULL },
-  { NULL }
+    { "restrict", 'r', 0, G_OPTION_ARG_STRING, &pattern, "Restrict navigation to URLs following the pattern P", "P" },
+    { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Print debug messages", NULL },
+    { "url", 'u', 0, G_OPTION_ARG_STRING, &url, "URL to navigate to", NULL },
+    { "block", 'b', 0, G_OPTION_ARG_NONE, &block_windows, "Block all new windows", NULL },
+    { NULL }
 };
 
 
 static void
 button_plus_clicked ( GtkWidget *widget, WebKitWebView *view )
 {
-       webkit_web_view_set_zoom_level (view,
-                0.10+ webkit_web_view_get_zoom_level(view));
+    webkit_web_view_set_zoom_level (view, 0.10+ webkit_web_view_get_zoom_level(view));
 }
 
 static void
 button_minus_clicked ( GtkWidget *widget, WebKitWebView *view )
 {
-       webkit_web_view_set_zoom_level (view,
-                -0.10+ webkit_web_view_get_zoom_level(view) );
+    webkit_web_view_set_zoom_level (view, -0.10+ webkit_web_view_get_zoom_level(view) );
 }
 
 static void
 entry_activate_cb (GtkEntry *entry, WebKitWebView *view)
 {
-        webkit_web_view_load_uri(view,gtk_entry_get_text (GTK_ENTRY (entry)));
+    webkit_web_view_load_uri(view,gtk_entry_get_text (GTK_ENTRY (entry)));
 }
 
 static gboolean
@@ -94,8 +92,7 @@ navigation_policy_decision_requested_cb(WebKitWebView* web_view,
     gboolean flag = TRUE;
     const gchar *uri = webkit_network_request_get_uri(request);
     g_debug ("Checking %s against %s", uri, pattern);
-    flag = g_pattern_match_string(g_pattern_spec_new(pattern),
-                                  uri);
+    flag = g_pattern_match_string(g_pattern_spec_new(pattern), uri);
     if (flag)
     {
         g_debug("Accepted");
