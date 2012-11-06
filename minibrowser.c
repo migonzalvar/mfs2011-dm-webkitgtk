@@ -277,17 +277,17 @@ int main(int argc, char* argv[])
         g_signal_connect(web_view, "new-window-policy-decision-requested",
                          G_CALLBACK(new_window_policy_decision_requested_cb), NULL);
 
-    // Load a web page into the browser instance
+    /* Load a web page into the browser instance */
     webkit_web_view_load_uri(web_view, url ? url : "http://www.webkitgtk.org/");
 
-    // Make sure that when the browser area becomes visible, it will get mouse
-    // and keyboard events
+    /* Make sure that when the browser area becomes visible, it will get mouse
+       and keyboard events */
     gtk_widget_grab_focus(GTK_WIDGET(web_view));
 
-    // Make sure the main window and all its contents are visible
+    /* Make sure the main window and all its contents are visible */
     gtk_widget_show_all(main_window);
 
-    // Run the main GTK+ event loop
+    /* Run the main GTK+ event loop */
     gtk_main();
 
     return 0;
